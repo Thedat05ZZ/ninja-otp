@@ -1,0 +1,73 @@
+// Thêm Proxy vào trước URL của ViOTP để bypass lỗi kết nối
+const proxy = "https://api.allorigins.win/raw?url="; 
+
+async function initApi() {
+    const token = document.getElementById('apiToken').value;
+    if(!token) return;
+
+    log("🕵️ Đang kiểm tra tài khoản...");
+    try {
+        // Chèn proxy vào đầu URL
+        const resBal = await fetch(proxy + encodeURIComponent(`https://api.viotp.com/users/balance?token=${token}`));
+        const dataBal = await resBal.json();
+        
+        if(dataBal.status_code === 200) {
+            document.getElementById('balanceText').innerText = "VND " + dataBal.data.balance.toLocaleString();
+            
+            log("🔎 Đang tìm ID dịch vụ Urbox...");
+            const resSer = await fetch(proxy + encodeURIComponent(`https://api.viotp.com/service/getv2?token=${token}&country=vn`));
+            const dataSer = await resSer.json();
+            
+            const urbox = dataSer.data.find(s => s.name.toLowerCase().includes('urbox'));
+            if(urbox) {
+                urboxServiceId = urbox.id;
+                document.getElementById('serviceName').innerText = urbox.name;
+                document.getElementById('servicePrice').innerText = urbox.price + "đ";
+                document.getElementById('btnPhone').disabled = false;
+                log("✅ Sẵn sàng chiến Urbox!");
+            }
+        } else {
+            log("❌ Token sai hoặc Proxy bận!");
+        }
+    } catch (e) { log("❌ Lỗi Proxy/Kết nối!"); }
+}
+
+async function getNewPhone() {
+    const token = document.getElementById('apiToken').value;
+    log("🔄 Đang yêu cầu SIM Mobi/Vina...");
+    
+    try {
+        const url = `https://api.viotp.com/request/getv2?token=${token}&serviceId=${urboxServiceId}&network=${targetNetwork}`;
+        const res = await fetch(proxy + encodeURIComponent(url));
+        const data = await res.json();
+        
+        if(data.status_code === 200) {
+            currentRequestId = data.data.request_id;
+            document.getElementById('phoneNumber').innerText = data.data.phone_number;
+            log("✅ Đã lấy số thành công!");
+            copyToClipboard(data.data.phone_number);
+        } else {
+            log("❌ " + data.message);
+        }
+    } catch (e) { log("❌ Lỗi lấy số!"); }
+}
+
+async function getOTP() {
+    const token = document.getElementById('apiToken').value;
+    if(!currentRequestId) return log("❌ Phải lấy số trước!");
+
+    log("⏳ Đang đợi tin nhắn...");
+    try {
+        const url = `https://api.viotp.com/session/getv2?token=${token}&requestId=${currentRequestId}`;
+        const res = await fetch(proxy + encodeURIComponent(url));
+        const data = await res.json();
+        
+        if(data.status_code === 200 && data.data.Code) {
+            document.getElementById('otpCode').innerText = data.data.Code;
+            log("🔥 ĐÃ CÓ MÃ OTP!");
+            copyToClipboard(data.data.Code);
+        } else {
+            log("🕒 Chưa có mã...");
+        }
+    } catch (e) { log("❌ Lỗi check OTP!"); }
+}
