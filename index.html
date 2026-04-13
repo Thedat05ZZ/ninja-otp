@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NINJA ViOTP - SIÊU CẤP VÃ VOUCHER</title>
+    <title>NINJA ViOTP PRO v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; }
         .btn-press:active { transform: scale(0.96); }
         .ninja-card { background: #1e293b; border: 1px solid #334155; }
-        /* Hiệu ứng loading nhẹ */
-        .loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .status-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
     </style>
 </head>
 <body class="p-4 sm:p-8 font-sans">
@@ -19,7 +18,7 @@
     <div class="max-w-md mx-auto space-y-5">
         <h1 class="text-3xl font-black text-center text-yellow-500 tracking-tighter uppercase italic">Ninja ViOTP Pro</h1>
 
-        <div class="ninja-card p-5 rounded-2xl shadow-xl">
+        <div class="ninja-card p-5 rounded-2xl shadow-xl border-t-4 border-t-yellow-500">
             <div class="flex justify-between items-center mb-3">
                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API TOKEN & SỐ DƯ</label>
                 <span id="balanceText" class="text-green-400 font-bold text-lg">VND 0</span>
@@ -30,49 +29,50 @@
                    class="w-full bg-slate-900 border-none rounded-xl p-4 text-sm ring-1 ring-slate-700 focus:ring-2 focus:ring-yellow-500 outline-none transition-all text-white font-mono">
         </div>
 
-        <div class="ninja-card p-4 rounded-2xl flex justify-between items-center">
+        <div class="ninja-card p-4 rounded-2xl flex justify-between items-center bg-slate-800/50">
             <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">DỊCH VỤ ĐANG CHỌN</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold">DỊCH VỤ</span>
                 <span id="serviceName" class="text-sm font-bold text-yellow-500 uppercase tracking-wide">Đang tìm Urbox...</span>
             </div>
             <div class="text-right">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">GIÁ THUÊ</span>
-                <span id="servicePrice" class="block text-sm font-bold text-white">0đ</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold">GIÁ</span>
+                <span id="servicePrice" class="block text-sm font-bold text-white italic">0đ</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-            <div class="ninja-card p-5 rounded-2xl text-center border-slate-700">
+            <div class="ninja-card p-5 rounded-2xl text-center hover:border-emerald-500/50 transition-colors">
                 <span class="text-[10px] text-slate-400 uppercase font-bold">SỐ ĐIỆN THOẠI</span>
-                <div id="phoneNumber" onclick="copyToClipboard(this.innerText)" class="text-xl font-mono font-bold text-white mt-2 cursor-pointer hover:text-green-400 transition-colors">---</div>
-                <p class="text-[10px] text-slate-500 mt-1 italic">Mobi | Vina</p>
+                <div id="phoneNumber" onclick="copyToClipboard(this.innerText)" class="text-xl font-mono font-bold text-white mt-2 cursor-pointer active:text-green-400">---</div>
+                <p class="text-[10px] text-slate-500 mt-1">Mobi | Vina</p>
             </div>
-            <div class="ninja-card p-5 rounded-2xl text-center border-yellow-500/30 border-2">
+            <div class="ninja-card p-5 rounded-2xl text-center border-yellow-500/30 border-2 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                 <span class="text-[10px] text-slate-400 uppercase font-bold">MÃ OTP</span>
-                <div id="otpCode" onclick="copyToClipboard(this.innerText)" class="text-3xl font-mono font-bold text-yellow-400 mt-1 cursor-pointer tracking-widest hover:scale-110 transition-transform">------</div>
+                <div id="otpCode" onclick="copyToClipboard(this.innerText)" class="text-3xl font-mono font-bold text-yellow-400 mt-1 cursor-pointer tracking-widest active:scale-110 transition-transform">------</div>
             </div>
         </div>
 
         <div class="space-y-4 pt-2">
             <button onclick="getNewPhone()" id="btnPhone" disabled
                 class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all flex justify-center items-center gap-2 text-lg">
-                🚀 LẤY SỐ MỚI
+                🚀 LẤY SỐ MỚI (F2)
             </button>
             
             <button onclick="getOTP()" id="btnOTP"
                 class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all flex justify-center items-center gap-2 text-lg">
-                📩 LẤY MÃ OTP
+                📩 LẤY MÃ OTP (F4)
             </button>
         </div>
 
-        <div id="status" class="text-center text-[11px] text-slate-400 font-bold bg-slate-800/80 py-3 rounded-xl border border-slate-700 mt-4 tracking-wide uppercase">
+        <div id="status" class="text-center text-[11px] text-slate-300 font-bold bg-slate-800 py-3 rounded-xl border border-slate-700 mt-4 tracking-wide uppercase status-pulse">
             Sẵn sàng chiến đấu...
         </div>
     </div>
 
     <script>
-        // CẤU HÌNH PROXY DỰ PHÒNG SIÊU TÍN
-        const proxy = "https://script.google.com/macros/s/AKfycbwkl3xIc9jaOPo5O3ei-cgHHy2M_lokebA_Vc3V0PKE8PtvEaa6fjZ1OOP0HM5Pmn7Y/exec"; 
+        // CẤU HÌNH GOOGLE PROXY CỦA ĐẠT (Đã thêm dấu ?url=)
+        const proxy = "https://script.google.com/macros/s/AKfycbwkl3xIc9jaOPo5O3ei-cgHHy2M_lokebA_Vc3V0PKE8PtvEaa6fjZ1OOP0HM5Pmn7Y/exec?url="; 
+        
         let currentRequestId = "";
         let urboxServiceId = "";
         const targetNetwork = "MOBIFONE|VINAPHONE";
@@ -81,51 +81,49 @@
             document.getElementById('status').innerText = msg;
         }
 
+        // HÀM FETCH NÂNG CẤP: Xử lý Redirect 302 của Google Script
         async function fetchAPI(url) {
-            // Sử dụng Proxy để bypass lỗi CORS trên GitHub Pages
-            const res = await fetch(proxy + encodeURIComponent(url));
+            const finalUrl = proxy + encodeURIComponent(url);
+            const res = await fetch(finalUrl, { redirect: 'follow' });
             if (!res.ok) throw new Error('Proxy error');
-            return await res.json();
+            const text = await res.text();
+            return JSON.parse(text);
         }
 
         async function initApi() {
-            const token = document.getElementById('apiToken').value;
+            const token = document.getElementById('apiToken').value.trim();
             if(!token) return;
 
-            log("🕵️ Đang kiểm tra Token & Số dư...");
+            log("🕵️ Đang check tài khoản qua Google Proxy...");
             try {
                 const dataBal = await fetchAPI(`https://api.viotp.com/users/balance?token=${token}`);
                 
                 if(dataBal.status_code === 200) {
                     document.getElementById('balanceText').innerText = "VND " + dataBal.data.balance.toLocaleString();
                     
-                    log("🔎 Đang tìm ID dịch vụ Urbox...");
                     const dataSer = await fetchAPI(`https://api.viotp.com/service/getv2?token=${token}&country=vn`);
-                    
-                    // Tự động tìm Urbox trong list dịch vụ
                     const urbox = dataSer.data.find(s => s.name.toLowerCase().includes('urbox'));
+                    
                     if(urbox) {
                         urboxServiceId = urbox.id;
                         document.getElementById('serviceName').innerText = urbox.name;
                         document.getElementById('servicePrice').innerText = urbox.price + "đ";
                         document.getElementById('btnPhone').disabled = false;
-                        log("✅ Sẵn sàng chiến! Bấm lấy số đi Đạt!");
-                    } else {
-                        log("❌ Không thấy Urbox! Check lại dịch vụ.");
+                        log("✅ Sẵn sàng! Phím tắt: F2 lấy số, F4 lấy OTP");
                     }
                 } else {
-                    log("❌ Token sai hoặc hết tiền rồi ông giáo ơi!");
+                    log("❌ Token sai hoặc hết tiền rồi!");
                 }
             } catch (e) { 
-                log("❌ Lỗi kết nối (CORS/Proxy). Thử lại nhé!"); 
-                console.error(e);
+                log("❌ Lỗi Proxy Google! Check lại deployment nhé."); 
             }
         }
 
         async function getNewPhone() {
-            const token = document.getElementById('apiToken').value;
-            log("🔄 Đang bốc số Mobi/Vina...");
+            const token = document.getElementById('apiToken').value.trim();
+            if(document.getElementById('btnPhone').disabled) return;
             
+            log("🔄 Đang bốc SIM Mobi/Vina...");
             try {
                 const data = await fetchAPI(`https://api.viotp.com/request/getv2?token=${token}&serviceId=${urboxServiceId}&network=${targetNetwork}`);
                 
@@ -133,46 +131,52 @@
                     currentRequestId = data.data.request_id;
                     document.getElementById('phoneNumber').innerText = data.data.phone_number;
                     document.getElementById('otpCode').innerText = "------";
-                    log("✅ Lấy số thành công! Đã tự động copy.");
+                    // Tự động cập nhật số dư mới
+                    document.getElementById('balanceText').innerText = "VND " + data.data.balance.toLocaleString();
+                    
+                    log("✅ Đã lấy số & Copy!");
                     copyToClipboard(data.data.phone_number);
                 } else {
                     log("❌ " + data.message);
                 }
-            } catch (e) { log("❌ Lỗi lấy số! Thử lại phát nữa."); }
+            } catch (e) { log("❌ Lỗi lấy số!"); }
         }
 
         async function getOTP() {
-            const token = document.getElementById('apiToken').value;
-            if(!currentRequestId) return log("❌ Phải lấy số trước đã ông ơi!");
+            const token = document.getElementById('apiToken').value.trim();
+            if(!currentRequestId) return log("❌ Phải lấy số trước!");
 
-            log("⏳ Đang check OTP (Đợi tí đừng nóng)...");
+            log("⏳ Đang đợi tin nhắn từ Urbox...");
             try {
                 const data = await fetchAPI(`https://api.viotp.com/session/getv2?token=${token}&requestId=${currentRequestId}`);
                 
                 if(data.status_code === 200 && data.data.Code) {
                     document.getElementById('otpCode').innerText = data.data.Code;
-                    log("🔥 HÚP OTP THÀNH CÔNG! ĐÃ COPY.");
+                    log("🔥 HÚP OTP THÀNH CÔNG!");
                     copyToClipboard(data.data.Code);
                 } else {
-                    log("🕒 Chưa có mã. Bấm lại sau 3-5 giây nhé...");
+                    log("🕒 Chưa có mã. Đợi thêm tí...");
                 }
-            } catch (e) { log("❌ Lỗi check OTP! Kiểm tra mạng."); }
+            } catch (e) { log("❌ Lỗi check OTP!"); }
         }
 
         function copyToClipboard(text) {
-            if(text === "---" || text === "------") return;
+            if(text.includes('-')) return;
             navigator.clipboard.writeText(text).then(() => {
                 const oldStatus = document.getElementById('status').innerText;
                 log("📋 Đã copy: " + text);
-                setTimeout(() => log(oldStatus), 1500);
+                setTimeout(() => log(oldStatus), 1200);
             });
         }
 
-        // Tự động kích hoạt khi mở trang
+        // HỆ THỐNG PHÍM TẮT CHO NINJA
+        window.onkeydown = (e) => {
+            if (e.key === "F2") getNewPhone();
+            if (e.key === "F4") getOTP();
+        };
+
         window.onload = () => {
-            if(document.getElementById('apiToken').value) {
-                initApi();
-            }
+            if(document.getElementById('apiToken').value) initApi();
         };
     </script>
 </body>
