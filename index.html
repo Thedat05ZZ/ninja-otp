@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ninja ViOTP Pro</title>
+    <title>Ninja ViOTP - Fixed 100%</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; }
@@ -12,141 +12,109 @@
     </style>
 </head>
 <body class="p-4 sm:p-8 font-sans">
-
     <div class="max-w-md mx-auto space-y-5">
-        <h1 class="text-3xl font-black text-center text-yellow-500 tracking-tighter">NINJA ViOTP PRO</h1>
-
+        <h1 class="text-3xl font-black text-center text-yellow-500 tracking-tighter uppercase">Ninja ViOTP Pro</h1>
         <div class="ninja-card p-5 rounded-2xl shadow-xl">
             <div class="flex justify-between items-center mb-3">
-                <label class="text-xs font-bold text-slate-400 uppercase">API Token & Số dư</label>
+                <label class="text-xs font-bold text-slate-400 uppercase">Token & Số dư</label>
                 <span id="balanceText" class="text-green-400 font-bold">VND 0</span>
             </div>
-            <input type="password" id="apiToken" onchange="initApi()" placeholder="Dán Token rồi nhấn Enter..." 
-                   class="w-full bg-slate-900 border-none rounded-xl p-3 text-sm ring-1 ring-slate-700 focus:ring-2 focus:ring-yellow-500 outline-none transition-all">
+            <input type="password" id="apiToken" onchange="initApi()" placeholder="Nhập Token..." 
+                   class="w-full bg-slate-900 border-none rounded-xl p-3 text-sm ring-1 ring-slate-700 focus:ring-2 focus:ring-yellow-500 outline-none transition-all text-white">
         </div>
-
         <div class="ninja-card p-4 rounded-2xl flex justify-between items-center">
             <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">Dịch vụ đang chọn</span>
-                <span id="serviceName" class="text-sm font-bold text-yellow-500 uppercase tracking-wide">Đang tìm Urbox...</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Dịch vụ</span>
+                <span id="serviceName" class="text-sm font-bold text-yellow-500 uppercase">Đang tìm Urbox...</span>
             </div>
             <div class="text-right">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">Giá thuê</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Giá</span>
                 <span id="servicePrice" class="block text-sm font-bold text-white">0đ</span>
             </div>
         </div>
-
         <div class="grid grid-cols-2 gap-4">
             <div class="ninja-card p-5 rounded-2xl text-center">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">Số Điện Thoại</span>
-                <div id="phoneNumber" class="text-xl font-mono font-bold text-white mt-2 cursor-pointer select-all">---</div>
-                <p class="text-[10px] text-slate-500 mt-1 italic">Mobi | Vina</p>
+                <span class="text-[10px] text-slate-400 uppercase font-bold">Số ĐT</span>
+                <div id="phoneNumber" onclick="copyToClipboard(this.innerText)" class="text-xl font-mono font-bold text-white mt-2 cursor-pointer">---</div>
             </div>
             <div class="ninja-card p-5 rounded-2xl text-center border-yellow-500/50 border">
                 <span class="text-[10px] text-slate-400 uppercase font-bold">Mã OTP</span>
-                <div id="otpCode" class="text-3xl font-mono font-bold text-yellow-400 mt-1 select-all tracking-widest">------</div>
+                <div id="otpCode" onclick="copyToClipboard(this.innerText)" class="text-3xl font-mono font-bold text-yellow-400 mt-1 cursor-pointer tracking-widest">------</div>
             </div>
         </div>
-
         <div class="space-y-3">
-            <button onclick="getNewPhone()" id="btnPhone" disabled
-                class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all flex justify-center items-center gap-2">
-                🚀 LẤY SỐ MỚI
-            </button>
-            
-            <button onclick="getOTP()" id="btnOTP"
-                class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all flex justify-center items-center gap-2">
-                📩 LẤY MÃ OTP
-            </button>
+            <button onclick="getNewPhone()" id="btnPhone" disabled class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all">🚀 LẤY SỐ MỚI</button>
+            <button onclick="getOTP()" id="btnOTP" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-5 rounded-2xl shadow-lg btn-press transition-all">📩 LẤY MÃ OTP</button>
         </div>
-
-        <div id="status" class="text-center text-xs text-slate-500 font-medium bg-slate-800/50 py-2 rounded-full">Nhập token để bắt đầu...</div>
+        <div id="status" class="text-center text-xs text-slate-500 font-medium py-2 rounded-full bg-slate-800/50">Nhập token để bắt đầu...</div>
     </div>
 
     <script>
+        // Cầu nối thần thánh để bypass lỗi CORS
+        const proxy = "https://api.allorigins.win/raw?url=";
         let currentRequestId = "";
         let urboxServiceId = "";
-        const targetNetwork = "MOBIFONE|VINAPHONE"; // Chỉ lấy 2 mạng này
 
-        function log(msg) {
-            document.getElementById('status').innerText = msg;
+        function log(msg) { document.getElementById('status').innerText = msg; }
+
+        async function fetchAPI(url) {
+            const res = await fetch(proxy + encodeURIComponent(url));
+            if (!res.ok) throw new Error('Network error');
+            return await res.json();
         }
 
         async function initApi() {
             const token = document.getElementById('apiToken').value;
             if(!token) return;
-
-            log("🕵️ Đang kiểm tra tài khoản...");
+            log("🕵️ Đang check tài khoản...");
             try {
-                // Check số dư (Mục 0 trong tài liệu)
-                const resBal = await fetch(`https://api.viotp.com/users/balance?token=${token}`);
-                const dataBal = await resBal.json();
-                
+                const dataBal = await fetchAPI(`https://api.viotp.com/users/balance?token=${token}`);
                 if(dataBal.status_code === 200) {
                     document.getElementById('balanceText').innerText = "VND " + dataBal.data.balance.toLocaleString();
-                    
-                    // Tìm dịch vụ Urbox (Mục 2 trong tài liệu)
-                    log("🔎 Đang tìm ID dịch vụ Urbox...");
-                    const resSer = await fetch(`https://api.viotp.com/service/getv2?token=${token}&country=vn`);
-                    const dataSer = await resSer.json();
-                    
+                    log("🔎 Đang tìm dịch vụ...");
+                    const dataSer = await fetchAPI(`https://api.viotp.com/service/getv2?token=${token}&country=vn`);
                     const urbox = dataSer.data.find(s => s.name.toLowerCase().includes('urbox'));
                     if(urbox) {
                         urboxServiceId = urbox.id;
                         document.getElementById('serviceName').innerText = urbox.name;
                         document.getElementById('servicePrice').innerText = urbox.price + "đ";
                         document.getElementById('btnPhone').disabled = false;
-                        log("✅ Sẵn sàng chiến Urbox!");
-                    } else {
-                        log("❌ Không tìm thấy dịch vụ Urbox!");
+                        log("✅ Sẵn sàng chiến!");
                     }
-                } else {
-                    log("❌ Token sai hoặc hết hạn!");
-                }
-            } catch (e) { log("❌ Lỗi kết nối API"); }
+                } else { log("❌ Token không hợp lệ!"); }
+            } catch (e) { log("❌ Lỗi kết nối (Thử lại sau 5s)"); }
         }
 
         async function getNewPhone() {
             const token = document.getElementById('apiToken').value;
-            log("🔄 Đang yêu cầu SIM Mobi/Vina...");
-            
+            log("🔄 Đang bốc số Mobi/Vina...");
             try {
-                // Thuê sim tùy chọn nhà mạng (Mục 3.1 trong tài liệu)
-                const res = await fetch(`https://api.viotp.com/request/getv2?token=${token}&serviceId=${urboxServiceId}&network=${targetNetwork}`);
-                const data = await res.json();
-                
+                const data = await fetchAPI(`https://api.viotp.com/request/getv2?token=${token}&serviceId=${urboxServiceId}&network=MOBIFONE|VINAPHONE`);
                 if(data.status_code === 200) {
                     currentRequestId = data.data.request_id;
                     document.getElementById('phoneNumber').innerText = data.data.phone_number;
-                    document.getElementById('otpCode').innerText = "------";
-                    log("✅ Đã lấy số thành công!");
                     copyToClipboard(data.data.phone_number);
-                } else {
-                    log("❌ " + data.message);
-                }
-            } catch (e) { log("❌ Lỗi lấy số"); }
+                    log("✅ Đã lấy số & Copy!");
+                } else { log("❌ " + data.message); }
+            } catch (e) { log("❌ Lỗi lấy số!"); }
         }
 
         async function getOTP() {
             const token = document.getElementById('apiToken').value;
-            if(!currentRequestId) return log("❌ Phải lấy số trước!");
-
-            log("⏳ Đang đợi tin nhắn...");
+            if(!currentRequestId) return log("❌ Cần lấy số trước!");
+            log("⏳ Đang đợi OTP...");
             try {
-                const res = await fetch(`https://api.viotp.com/session/getv2?token=${token}&requestId=${currentRequestId}`);
-                const data = await res.json();
-                
+                const data = await fetchAPI(`https://api.viotp.com/session/getv2?token=${token}&requestId=${currentRequestId}`);
                 if(data.status_code === 200 && data.data.Code) {
                     document.getElementById('otpCode').innerText = data.data.Code;
-                    log("🔥 ĐÃ CÓ MÃ OTP!");
                     copyToClipboard(data.data.Code);
-                } else {
-                    log("🕒 Chưa có mã, thử lại sau...");
-                }
-            } catch (e) { log("❌ Lỗi check OTP"); }
+                    log("🔥 HÚP OTP THÀNH CÔNG!");
+                } else { log("🕒 Chưa có mã..."); }
+            } catch (e) { log("❌ Lỗi check OTP!"); }
         }
 
         function copyToClipboard(text) {
+            if(text.includes('-')) return;
             navigator.clipboard.writeText(text);
             log("📋 Đã copy: " + text);
         }
